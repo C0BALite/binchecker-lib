@@ -1,9 +1,9 @@
 BinDiff-Lib
 ===========
 
-This shared library is written in C language using GNOME Builder. It compares files in two separate directories, finds differences in binary data and displays them. Symbolic links, nonexistent files and files requiring permission are skipped.
+This shared library is written in C language. It compares files in two separate directories, finds differences in binary data and displays them. Symbolic links, nonexistent files and files requiring permission are skipped.
 
-The application has been tested and runs on Alt Regular GNOME. App tested using file\_scrambler.py.
+The application has been tested and runs on Alt Regular GNOME.
 
 Installation Steps:
 -------------------
