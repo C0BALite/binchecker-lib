@@ -6,56 +6,36 @@ void concatHex(unsigned char source, char * destination) {
         strcat(destination, tempStr);
 }
 
-// Function to recursively get all file paths
 void get_all_file_paths(const char * base_path, char ** * file_paths, int * count, int * capacity) {
 
         DIR * dir = opendir(base_path);
-        struct dirent * entry; // Structure to store directory entry information
-        char path[1024]; // Buffer to construct full paths
-
-        // Check if directory was opened successfully
+        struct dirent * entry; 
+        char path[1024]; 
         if (dir == NULL) {
                 perror("opendir");
                 return;
         }
 
         while ((entry = readdir(dir)) != NULL) {
-                // Skip the current (.) and parent (..) directory entries to avoid infinite loops
                 if (strcmp(entry -> d_name, ".") == 0 || strcmp(entry -> d_name, "..") == 0) {
                         continue;
                 }
-
-                // Construct the full path by combining base path with entry name
                 snprintf(path, sizeof(path), "%s/%s", base_path, entry -> d_name);
-
                 if (entry -> d_type == DT_DIR) {
-                        // Recursively call this function for subdirectories
                         get_all_file_paths(path, file_paths, count, capacity);
                 } else {
-                        // check if we need to expand our storage array
                         if ( * count >= * capacity) {
-                                // Calculate new capacity: double current size or initialize to 16 if empty
                                 int new_capacity = ( * capacity == 0) ? 16 : * capacity * 2;
-
-                                // Reallocate memory for the file paths array
                                 char ** new_array = (char ** ) realloc( * file_paths, new_capacity * sizeof(char * ));
-
-                                // Check if reallocation was successful
                                 if (new_array == NULL) {
                                         perror("realloc");
                                         closedir(dir);
                                         return;
                                 }
-
-                                // Update the array pointer and capacity
                                 * file_paths = new_array;
                                 * capacity = new_capacity;
                         }
-
-                        // Add the file path to our array
                         ( * file_paths)[ * count] = strdup(path);
-
-                        // Check if string duplication was successful
                         if (( * file_paths)[ * count] == NULL) {
                                 perror("strdup");
                                 closedir(dir);
@@ -65,8 +45,6 @@ void get_all_file_paths(const char * base_path, char ** * file_paths, int * coun
                         ( * count) ++;
                 }
         }
-
-        // Close the directory handle when done
         closedir(dir);
 }
 
@@ -86,12 +64,10 @@ struct diffChunk * compare_files(char * fp1, char * fp2, int padding) {
         if (diffs == NULL) {
                 return NULL;
         }
-        //symlink discard
         lstat(fp1, & sb);
         if (S_ISLNK(sb.st_mode)) return NULL;
         file1 = fopen(fp1, "rb");
         file2 = fopen(fp2, "rb");
-        //Filesize calculation
         fseek(file1, 0, SEEK_END);
         fileSize = ftell(file1);
         rewind(file1);
@@ -109,7 +85,6 @@ struct diffChunk * compare_files(char * fp1, char * fp2, int padding) {
                 bytesRead1 = fread(dataBlock1, 1, fileSize, file1);
                 bytesRead2 = fread(dataBlock2, 1, fileSize, file2);
                 interCheck = 0;
-                // Check if read lengths differ or content differs
                 if ((bytesRead1 > 0 && memcmp(dataBlock1, dataBlock2, bytesRead1) != 0)) {
                         while (interCheck < bytesRead1) {
                                 while (dataBlock1[interCheck] != dataBlock2[interCheck]) {
@@ -162,7 +137,6 @@ struct diffChunk * compare_files(char * fp1, char * fp2, int padding) {
                 }
 
         } while (bytesRead1 > 0 && bytesRead2 > 0);
-        //post-check cleanup, file closure and a safety check for diffs
         fclose(file1);
         fclose(file2);
         free(dataBlock1);
@@ -170,10 +144,10 @@ struct diffChunk * compare_files(char * fp1, char * fp2, int padding) {
         dataBlock1 = dataBlock2 = NULL;
         if (diffCount == 0) {
                 return NULL;
-        }    // Terminate the array
-    diffs[diffCount].pos = 0;
-    diffs[diffCount].length = 0;
-    diffs[diffCount].diffFile1 = NULL;
-    diffs[diffCount].diffFile2 = NULL;
+        } 
+        diffs[diffCount].pos = 0;
+        diffs[diffCount].length = 0;
+        diffs[diffCount].diffFile1 = NULL;
+        diffs[diffCount].diffFile2 = NULL;
         return diffs;
 }

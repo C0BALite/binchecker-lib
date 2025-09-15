@@ -5,14 +5,14 @@ project('binchecker-lib', 'c',
 )
 
 libbindif_sources = ['src/libbindiff.c']
-libbindif_inc = include_directories('src') # Header directory for the library
+libbindif_inc = include_directories('src') 
 
 
 libbindif = shared_library(
-    'bindiff',              # Name of the library (e.g., libmylib.so)
+    'bindiff',              
     libbindif_sources,
     include_directories: libbindif_inc,
-    install: true,         # Install the library to the system prefix
+    install: true,         
     install_dir:'/usr/lib'
 )
 
