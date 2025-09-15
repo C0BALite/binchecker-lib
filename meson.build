@@ -13,7 +13,8 @@ libbindif = shared_library(
     libbindif_sources,
     include_directories: libbindif_inc,
     install: true,         
-    install_dir:'/usr/lib'
+    install_dir:'/usr/lib',
+    soversion: 0
 )
 
 install_headers('src/libbindiff.h', subdir: 'libbindiff')
