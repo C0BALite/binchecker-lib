@@ -68,18 +68,20 @@ struct diffChunk * compare_files(char * fp1, char * fp2, int padding) {
         if (S_ISLNK(sb.st_mode)) return NULL;
         file1 = fopen(fp1, "rb");
         file2 = fopen(fp2, "rb");
-        fseek(file1, 0, SEEK_END);
-        fileSize = ftell(file1);
-        rewind(file1);
-
-        dataBlock1 = (unsigned char * ) malloc(fileSize * sizeof(char));
-        dataBlock2 = (unsigned char * ) malloc(fileSize * sizeof(char));
+  
         if (file1 == NULL || file2 == NULL) {
                 printf("Error opening files: %s\n", fp1);
                 if (file1) fclose(file1);
                 if (file2) fclose(file2);
                 return NULL;
         }
+                                                                        
+        fseek(file1, 0, SEEK_END);
+        fileSize = ftell(file1);
+        rewind(file1);
+
+        dataBlock1 = (unsigned char * ) malloc(fileSize * sizeof(char));
+        dataBlock2 = (unsigned char * ) malloc(fileSize * sizeof(char));
 
         do {
                 bytesRead1 = fread(dataBlock1, 1, fileSize, file1);
