@@ -9,8 +9,8 @@ void concatHex(unsigned char source, char * destination) {
 void get_all_file_paths(const char * base_path, char ** * file_paths, int * count, int * capacity) {
 
         DIR * dir = opendir(base_path);
-        struct dirent * entry; 
-        char path[1024]; 
+        struct dirent * entry;
+        char path[1024];
         if (dir == NULL) {
                 perror("opendir");
                 return;
@@ -68,14 +68,14 @@ struct diffChunk * compare_files(char * fp1, char * fp2, int padding) {
         if (S_ISLNK(sb.st_mode)) return NULL;
         file1 = fopen(fp1, "rb");
         file2 = fopen(fp2, "rb");
-  
+
         if (file1 == NULL || file2 == NULL) {
                 perror("Error opening files\n");
                 if (file1) fclose(file1);
                 if (file2) fclose(file2);
                 return NULL;
         }
-                                                                        
+
         fseek(file1, 0, SEEK_END);
         fileSize = ftell(file1);
         rewind(file1);
@@ -86,63 +86,58 @@ struct diffChunk * compare_files(char * fp1, char * fp2, int padding) {
 
         dataBlock1 = (unsigned char * ) malloc(fileSize * sizeof(char));
         dataBlock2 = (unsigned char * ) malloc(fileSize * sizeof(char));
-
-        do {
-                bytesRead1 = fread(dataBlock1, 1, fileSize, file1);
-                bytesRead2 = fread(dataBlock2, 1, fileSize, file2);
-                interCheck = 0;
-                if ((bytesRead1 > 0 && memcmp(dataBlock1, dataBlock2, bytesRead1) != 0)) {
-                        while (interCheck < bytesRead1) {
-                                while (dataBlock1[interCheck] != dataBlock2[interCheck]) {
-                                        //insert pre-padding
-                                        if (state == 0) {
-                                                for (int i = padding; i > 0; i--) {
-                                                        if (interCheck - i >= 0) {
-                                                                concatHex(dataBlock1[interCheck - i], diffBlock1);
-                                                                concatHex(dataBlock2[interCheck - i], diffBlock2);
-                                                        }
+        bytesRead1 = fread(dataBlock1, 1, fileSize, file1);
+        bytesRead2 = fread(dataBlock2, 1, fileSize, file2);
+        interCheck = 0;
+        if ((bytesRead1 > 0 && memcmp(dataBlock1, dataBlock2, bytesRead1) != 0)) {
+                while (interCheck < bytesRead1) {
+                        while (dataBlock1[interCheck] != dataBlock2[interCheck]) {
+                                //insert pre-padding
+                                if (state == 0) {
+                                        for (int i = padding; i > 0; i--) {
+                                                if (interCheck - i >= 0) {
+                                                        concatHex(dataBlock1[interCheck - i], diffBlock1);
+                                                        concatHex(dataBlock2[interCheck - i], diffBlock2);
                                                 }
-                                                strcat(diffBlock1, "<b>");
-                                                strcat(diffBlock2, "<b>");
-                                                state = 1;
                                         }
-                                        //insert non-equal bites
-                                        concatHex(dataBlock1[interCheck], diffBlock1);
-                                        concatHex(dataBlock2[interCheck], diffBlock2);
+                                        strcat(diffBlock1, "<b>");
+                                        strcat(diffBlock2, "<b>");
                                         state = 1;
-                                        interCheck++;
-                                        currLength++;
                                 }
-                                if (state == 1) {
-                                        //insert post-padding
-                                        strcat(diffBlock1, "</b>");
-                                        strcat(diffBlock2, "</b>");
-                                        for (int i = 0; i < padding; i++) {
-                                                if (interCheck + i <= fileSize - 1) {
-                                                        concatHex(dataBlock1[interCheck + i], diffBlock1);
-                                                        concatHex(dataBlock2[interCheck + i], diffBlock2);
-                                                }
-                                        }
-                                        //fill up a new diff chunk
-                                        diffs[diffCount].pos = interCheck - currLength;
-                                        diffs[diffCount].length = currLength;
-                                        diffs[diffCount].diffFile1 = (unsigned char * ) malloc(sizeof(unsigned char) * 3 * (currLength + padding * 2) + 8);
-                                        diffs[diffCount].diffFile2 = (unsigned char * ) malloc(sizeof(unsigned char) * 3 * (currLength + padding * 2) + 8);
-                                        memcpy(diffs[diffCount].diffFile1, diffBlock1, 3 * (currLength + padding * 2) + 8);
-                                        memcpy(diffs[diffCount].diffFile2, diffBlock2, 3 * (currLength + padding * 2) + 8);
-                                        diffCount++;
-                                        //clean up output strings
-                                        memset(diffBlock1, 0, sizeof(diffBlock1));
-                                        memset(diffBlock2, 0, sizeof(diffBlock2));
-                                        state = 0;
-                                        currLength = 0;
-                                }
+                                //insert non-equal bites
+                                concatHex(dataBlock1[interCheck], diffBlock1);
+                                concatHex(dataBlock2[interCheck], diffBlock2);
+                                state = 1;
                                 interCheck++;
+                                currLength++;
                         }
-                        break;
+                        if (state == 1) {
+                                //insert post-padding
+                                strcat(diffBlock1, "</b>");
+                                strcat(diffBlock2, "</b>");
+                                for (int i = 0; i < padding; i++) {
+                                        if (interCheck + i <= fileSize - 1) {
+                                                concatHex(dataBlock1[interCheck + i], diffBlock1);
+                                                concatHex(dataBlock2[interCheck + i], diffBlock2);
+                                        }
+                                }
+                                //fill up a new diff chunk
+                                diffs[diffCount].pos = interCheck - currLength;
+                                diffs[diffCount].length = currLength;
+                                diffs[diffCount].diffFile1 = (unsigned char * ) malloc(sizeof(unsigned char) * 3 * (currLength + padding * 2) + 8);
+                                diffs[diffCount].diffFile2 = (unsigned char * ) malloc(sizeof(unsigned char) * 3 * (currLength + padding * 2) + 8);
+                                memcpy(diffs[diffCount].diffFile1, diffBlock1, 3 * (currLength + padding * 2) + 8);
+                                memcpy(diffs[diffCount].diffFile2, diffBlock2, 3 * (currLength + padding * 2) + 8);
+                                diffCount++;
+                                //clean up output strings
+                                memset(diffBlock1, 0, sizeof(diffBlock1));
+                                memset(diffBlock2, 0, sizeof(diffBlock2));
+                                state = 0;
+                                currLength = 0;
+                        }
+                        interCheck++;
                 }
-
-        } while (bytesRead1 > 0 && bytesRead2 > 0);
+        }
         fclose(file1);
         fclose(file2);
         free(dataBlock1);
@@ -150,7 +145,7 @@ struct diffChunk * compare_files(char * fp1, char * fp2, int padding) {
         dataBlock1 = dataBlock2 = NULL;
         if (diffCount == 0) {
                 return NULL;
-        } 
+        }
         diffs[diffCount].pos = 0;
         diffs[diffCount].length = 0;
         diffs[diffCount].diffFile1 = NULL;
