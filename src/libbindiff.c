@@ -70,7 +70,7 @@ struct diffChunk * compare_files(char * fp1, char * fp2, int padding) {
         file2 = fopen(fp2, "rb");
   
         if (file1 == NULL || file2 == NULL) {
-                printf("Error opening files: %s\n", fp1);
+                perror("Error opening files\n");
                 if (file1) fclose(file1);
                 if (file2) fclose(file2);
                 return NULL;
@@ -79,6 +79,10 @@ struct diffChunk * compare_files(char * fp1, char * fp2, int padding) {
         fseek(file1, 0, SEEK_END);
         fileSize = ftell(file1);
         rewind(file1);
+        if (fileSize == 0) {
+                perror("File is of size 0\n");
+                return NULL;
+        }
 
         dataBlock1 = (unsigned char * ) malloc(fileSize * sizeof(char));
         dataBlock2 = (unsigned char * ) malloc(fileSize * sizeof(char));
