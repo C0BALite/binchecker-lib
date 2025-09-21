@@ -9,8 +9,8 @@ struct diffChunk
 {
     int pos;
     int length;
-    unsigned char *diffFile1;
-    unsigned char *diffFile2;
+    unsigned char *originalDiffFile;
+    unsigned char *corruptedDiffFile;
 };
 
 struct diffChunk * compare_files(char *ptr1, char *ptr2, int padding);

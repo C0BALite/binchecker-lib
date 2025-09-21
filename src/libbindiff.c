@@ -48,9 +48,9 @@ void get_all_file_paths(const char * base_path, char ** * file_paths, int * coun
         closedir(dir);
 }
 
-struct diffChunk * compare_files(char * fp1, char * fp2, int padding) {
-        FILE * file1, * file2;
-        size_t bytesRead1, bytesRead2;
+struct diffChunk * compare_files(char * originalFilepath, char * corruptedFilepath, int padding) {
+        FILE * originalFile, * corruptedFile;
+        size_t bytesRead1;
         struct stat sb;
         int interCheck = 0;
         int fileSize = 0;
@@ -64,21 +64,21 @@ struct diffChunk * compare_files(char * fp1, char * fp2, int padding) {
         if (diffs == NULL) {
                 return NULL;
         }
-        lstat(fp1, & sb);
+        lstat(originalFilepath, & sb);
         if (S_ISLNK(sb.st_mode)) return NULL;
-        file1 = fopen(fp1, "rb");
-        file2 = fopen(fp2, "rb");
+        originalFile = fopen(originalFilepath, "rb");
+        corruptedFile = fopen(corruptedFilepath, "rb");
 
-        if (file1 == NULL || file2 == NULL) {
+        if (originalFile == NULL || corruptedFile == NULL) {
                 perror("Error opening files\n");
-                if (file1) fclose(file1);
-                if (file2) fclose(file2);
+                if (originalFile) fclose(originalFile);
+                if (corruptedFile) fclose(corruptedFile);
                 return NULL;
         }
 
-        fseek(file1, 0, SEEK_END);
-        fileSize = ftell(file1);
-        rewind(file1);
+        fseek(originalFile, 0, SEEK_END);
+        fileSize = ftell(originalFile);
+        rewind(originalFile);
         if (fileSize == 0) {
                 perror("File is of size 0\n");
                 return NULL;
@@ -86,8 +86,8 @@ struct diffChunk * compare_files(char * fp1, char * fp2, int padding) {
 
         dataBlock1 = (unsigned char * ) malloc(fileSize * sizeof(char));
         dataBlock2 = (unsigned char * ) malloc(fileSize * sizeof(char));
-        bytesRead1 = fread(dataBlock1, 1, fileSize, file1);
-        bytesRead2 = fread(dataBlock2, 1, fileSize, file2);
+        bytesRead1 = fread(dataBlock1, 1, fileSize, originalFile);
+        fread(dataBlock2, 1, fileSize, corruptedFile);
         interCheck = 0;
         if ((bytesRead1 > 0 && memcmp(dataBlock1, dataBlock2, bytesRead1) != 0)) {
                 while (interCheck < bytesRead1) {
@@ -124,10 +124,10 @@ struct diffChunk * compare_files(char * fp1, char * fp2, int padding) {
                                 //fill up a new diff chunk
                                 diffs[diffCount].pos = interCheck - currLength;
                                 diffs[diffCount].length = currLength;
-                                diffs[diffCount].diffFile1 = (unsigned char * ) malloc(sizeof(unsigned char) * 3 * (currLength + padding * 2) + 8);
-                                diffs[diffCount].diffFile2 = (unsigned char * ) malloc(sizeof(unsigned char) * 3 * (currLength + padding * 2) + 8);
-                                memcpy(diffs[diffCount].diffFile1, diffBlock1, 3 * (currLength + padding * 2) + 8);
-                                memcpy(diffs[diffCount].diffFile2, diffBlock2, 3 * (currLength + padding * 2) + 8);
+                                diffs[diffCount].originalDiffFile = (unsigned char * ) malloc(sizeof(unsigned char) * 3 * (currLength + padding * 2) + 8);
+                                diffs[diffCount].corruptedDiffFile = (unsigned char * ) malloc(sizeof(unsigned char) * 3 * (currLength + padding * 2) + 8);
+                                memcpy(diffs[diffCount].originalDiffFile, diffBlock1, 3 * (currLength + padding * 2) + 8);
+                                memcpy(diffs[diffCount].corruptedDiffFile, diffBlock2, 3 * (currLength + padding * 2) + 8);
                                 diffCount++;
                                 //clean up output strings
                                 memset(diffBlock1, 0, sizeof(diffBlock1));
@@ -138,8 +138,8 @@ struct diffChunk * compare_files(char * fp1, char * fp2, int padding) {
                         interCheck++;
                 }
         }
-        fclose(file1);
-        fclose(file2);
+        fclose(originalFile);
+        fclose(corruptedFile);
         free(dataBlock1);
         free(dataBlock2);
         dataBlock1 = dataBlock2 = NULL;
@@ -148,7 +148,7 @@ struct diffChunk * compare_files(char * fp1, char * fp2, int padding) {
         }
         diffs[diffCount].pos = 0;
         diffs[diffCount].length = 0;
-        diffs[diffCount].diffFile1 = NULL;
-        diffs[diffCount].diffFile2 = NULL;
+        diffs[diffCount].originalDiffFile = NULL;
+        diffs[diffCount].corruptedDiffFile = NULL;
         return diffs;
 }
