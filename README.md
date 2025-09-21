@@ -23,7 +23,3 @@ Installation Steps:
 4\. Install the library
 
 ``` meson install -C build ```
-
-5\. Update dynamic linker cache
-
-``` sudo ldconfig ```
